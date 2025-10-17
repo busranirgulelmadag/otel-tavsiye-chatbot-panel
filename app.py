@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import torch
-import os # Ortam değişkenlerini yönetmek için (gerekirse)
+import numpy as np # Pandas ile birlikte lazım olabilir
 
 # RAG Kütüphaneleri
 from langchain_community.document_loaders import DataFrameLoader
@@ -15,19 +15,18 @@ EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 
 
 # ----------------------------------------------------
-# RAG KURULUM FONKSİYONLARI (Cache ile sadece 1 kez çalışır)
+# 1. RAG KURULUM FONKSİYONLARI (Cache ile sadece 1 kez çalışır)
 # ----------------------------------------------------
 
 @st.cache_resource
 def setup_rag_faiss(file_path):
-    # 1. Veriyi yükle
+    # Veriyi yükle (CSV'nizin kodlaması farklıysa encoding='iso-8859-9' deneyin)
     try:
         df = pd.read_csv(file_path)
     except FileNotFoundError:
-        st.error(f"Hata: Veri dosyası bulunamadı: {file_path}")
-        return None
+        return None # Hata durumunda None döndür
 
-    # DataFrame'i LangChain dokümanlarına dönüştür (Yorum_Metni sütununu kullanıyoruz)
+    # DataFrame'i LangChain dokümanlarına dönüştür
     loader = DataFrameLoader(df, page_content_column="Yorum_Metni")
     data = loader.load()
 
@@ -35,8 +34,7 @@ def setup_rag_faiss(file_path):
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     docs = text_splitter.split_documents(data)
 
-    # Embedding modelini tanımla (Yerel, API gerektirmez)
-    # Cihazda GPU varsa kullanır, yoksa CPU'da çalışır
+    # Embedding modelini tanımla
     device = "cuda" if torch.cuda.is_available() else "cpu"
     embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_NAME, model_kwargs={'device': device})
 
@@ -45,50 +43,71 @@ def setup_rag_faiss(file_path):
     
     return vectorstore
 
+# Sadece EN ALAKALI TEK BİR SONUCU getiren fonksiyon
 def get_answer_from_retriever(vectorstore, query):
-    # En alakalı 3 yorumu bul (k=3 en alakalı 3 dokümanı getirir)
-    results = vectorstore.similarity_search(query, k=3) 
+    # k=1 ile sadece en alakalı TEK bir yorumu bul
+    results = vectorstore.similarity_search(query, k=1) 
     
-    # Bulunan yorum metinlerini birleştir
-    context_list = []
-    
-    for doc in results:
-        # Hangi otelden geldiğini ve yorum metnini al
+    if results:
+        doc = results[0]
         otel_adi = doc.metadata.get('Otel_Adi', 'Bilinmiyor')
         yorum = doc.page_content
-        context_list.append(f"**Otel: {otel_adi}** - Yorum: {yorum}")
-
-    # Kullanıcıya bir özet sunun
-    response = "\n\n---\n\n".join(context_list)
+        
+        response = (
+            f"**En Alakalı Bilgi Şuradan Bulunmuştur:** **{otel_adi}**\n\n"
+            f"**Alıntı Yapılan Yorum:** *'{yorum}'*"
+        )
+    else:
+        response = "Üzgünüm, yorumlarda bu konuyla ilgili çok alakalı bir bilgi bulamadım."
     
     return response
 
 
 # ----------------------------------------------------
-# STREAMLIT ANA UYGULAMA GÖVDESİ (SADECE RAG BOT)
+# 2. STREAMLIT ANA UYGULAMA GÖVDESİ (Hibrit Panel)
 # ----------------------------------------------------
 
-st.set_page_config(layout="wide", page_title="RAG Chatbot | Otel Yorumları")
+st.set_page_config(layout="wide", page_title="Hibrit Otel Analiz ve Chatbot")
 
-st.title("🤖 Şirince Otel Yorumları RAG Chatbot")
-st.markdown("---")
+st.title("Hibrit Şirince Otel Analiz Paneli & RAG Chatbot")
+st.markdown("Veriyi soldaki filtrelerle görsel olarak keşfedin veya aşağıdaki chatbot'a spesifik sorular sorun.")
 
-# RAG kurulumunu yap (Hata kontrolü eklenmiştir)
+# ----------------------------------------------------
+# CHATBOT ALANI (Dashboard'un Hemen Altında)
+# ----------------------------------------------------
+
+st.header("🤖 Yorumlara Dayalı Chatbot")
+st.markdown("Otel yorumlarında arama yapmak için bir soru sorun. Örneğin: *'Kahvaltısı harika olan bir konak var mıydı?'*")
+
+# RAG kurulumunu yap
 vector_db = setup_rag_faiss(FILE_PATH)
 
 if vector_db:
-    st.subheader("Otel Yorumlarına Dayalı Akıllı Sorgulama")
-    st.markdown("Aşağıdaki alana, otel yorumlarına dayanarak cevap alabileceğiniz bir soru sorun. Örneğin: *'Huzurlu ve temizliği beğenilen bir konak var mı?'*")
-
     user_query = st.text_input("Sorgunuzu buraya girin:")
 
     if user_query:
         with st.spinner("Yorumlarda anlamsal arama yapılıyor..."):
-            # Cevabı üret
             response = get_answer_from_retriever(vector_db, user_query)
-            
-            st.success("Sorgunuzla En Alakalı Bilgiler Aşağıdadır:")
+            st.success("Sorgunuza En Alakalı Cevap:")
             st.markdown(response)
+            
+st.markdown("---") # Chatbot ile Dashboard arasına ayırıcı
 
-else:
-    st.warning("RAG sistemi başlatılamadı. Lütfen 'sirince_otelleri.csv' dosyasının bulunduğundan ve kütüphanelerin yüklü olduğundan emin olun.")
+
+# ----------------------------------------------------
+# DASHBOARD / ANALİZ ALANI (Chatbot'tan Sonra)
+# ----------------------------------------------------
+
+# BU NOKTADAN SONRA, ESKİ FİLTRELEME VE GRAFİK KODLARINIZ DEVAM ETMELİDİR.
+# 
+# Örnek Başlıklar (Eski Kodlarınızdan Alınmıştır)
+st.header("📊 Genel Bakış ve Analiz") 
+
+# Burada, önceki filtreleme ve grafik kodlarınız yer almalı. 
+# Örneğin:
+# df = pd.read_csv("sirince_otelleri.csv")
+# selected_hotels = st.sidebar.multiselect("Otelleri Seçin:", df['Otel_Adi'].unique())
+# # ... diğer filtreler, grafikler ve metrikler ...
+
+# ÖNEMLİ: Eğer mevcut filtreleme kodlarınızda "st.title" veya "st.header" gibi 
+# kodlar tekrarlanıyorsa, onları SİLİN ve sadece grafik/filtre mantığını buraya taşıyın.
