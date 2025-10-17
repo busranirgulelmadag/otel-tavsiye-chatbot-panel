@@ -43,3 +43,4 @@ langchain                             # RAG zincirlerini yönetmek için
 openai                                # LLM ve embedding için
 tiktoken                              # Metin parçalama için
 chromadb                              # Vektör veritabanı
+langchain-openai
