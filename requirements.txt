@@ -47,3 +47,4 @@ google-genai # Gemini API'ye bağlanmak için yeni kütüphane
 chromadb
 faiss-cpu # Vektör DB'yi tutmak için hala lazım
 sentence-transformers # Embedding için hala lazım
+langchain-google-genai
