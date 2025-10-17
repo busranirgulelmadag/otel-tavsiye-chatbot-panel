@@ -57,3 +57,11 @@ Bu projeyi kendi bilgisayarınızda çalıştırmak için aşağıdaki adımlar�
     streamlit run app.py
     ```
 Uygulama, tarayıcınızda otomatik olarak açılacaktır.
+
+## 🔗 Canlı Uygulamayı Görün
+
+Uygulamaya doğrudan Streamlit Cloud üzerinden erişmek için aşağıdaki bağlantıyı kullanabilirsiniz:
+
+[OTEL TAVSİYE CHATBOT PANELİ CANLI BAĞLANTI](https://otel-tavsiye-chatbot-panel.streamlit.app/)
+
+---
