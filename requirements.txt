@@ -37,3 +37,11 @@ typing_extensions==4.15.0
 tzdata==2025.2
 urllib3==2.5.0
 watchdog==6.0.0
+streamlit
+pandas
+langchain                                 # RAG zincirleri için
+langchain-community                       # HuggingFace, FAISS gibi araçlar için
+sentence-transformers                     # Yerel embedding (gömme) modelini çalıştırmak için
+faiss-cpu                                 # Hızlı vektör araması için vektör veritabanı
+transformers                              # Yerel LLM'i çalıştırmak için
+torch                                     # Yapay zeka modelleri için temel kütüphane
