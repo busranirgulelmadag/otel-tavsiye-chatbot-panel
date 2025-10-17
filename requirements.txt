@@ -39,9 +39,7 @@ urllib3==2.5.0
 watchdog==6.0.0
 streamlit
 pandas
-langchain                                 # RAG zincirleri için
-langchain-community                       # HuggingFace, FAISS gibi araçlar için
-sentence-transformers                     # Yerel embedding (gömme) modelini çalıştırmak için
-faiss-cpu                                 # Hızlı vektör araması için vektör veritabanı
-transformers                              # Yerel LLM'i çalıştırmak için
-torch                                     # Yapay zeka modelleri için temel kütüphane
+langchain                             # RAG zincirlerini yönetmek için
+openai                                # LLM ve embedding için
+tiktoken                              # Metin parçalama için
+chromadb                              # Vektör veritabanı
