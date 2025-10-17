@@ -39,8 +39,11 @@ urllib3==2.5.0
 watchdog==6.0.0
 streamlit
 pandas
-langchain                             # RAG zincirlerini yönetmek için
-openai                                # LLM ve embedding için
-tiktoken                              # Metin parçalama için
-chromadb                              # Vektör veritabanı
-langchain-openai
+langchain
+langchain-community 
+# ÖNCEKİ KÜTÜPHANELER: openai, tiktoken, langchain-openai SİLİNMELİ
+# YENİ KÜTÜPHANELER:
+google-genai # Gemini API'ye bağlanmak için yeni kütüphane
+chromadb
+faiss-cpu # Vektör DB'yi tutmak için hala lazım
+sentence-transformers # Embedding için hala lazım
